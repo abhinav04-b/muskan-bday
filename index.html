@@ -56,7 +56,7 @@
             0% { transform: translateX(-50%) scale(1) rotate(-2deg); opacity: 1; }
             100% { transform: translateX(-50%) scale(0.9) rotate(2deg); opacity: 0.9; }
         }
-        .timer { font-size: 4rem; font-family: 'Libre Baskerville', serif; margin-top: 30px; }
+        .timer { font-size: 3rem; font-family: 'Libre Baskerville', serif; margin-top: 30px; letter-spacing: 2px;}
 
         /* ========================
            STAGE 2: STRANGER THINGS
@@ -79,18 +79,11 @@
            ======================== */
         #stage-3 { 
             background-color: #000;
-            
-            /* UPDATED: Demogorgon Background */
-            /* Note: Replace the URL below with your preferred Demogorgon image if needed */
             background-image: url('dg1.png'); 
-            
             background-position: center;
             background-repeat: no-repeat;
-            background-size: contain; /* Ensures the monster is fully visible */
-            
-            /* Dark overlay to ensure the cute cards pop */
+            background-size: contain;
             box-shadow: inset 0 0 100px #000; 
-
             z-index: 20; 
             padding: 20px; 
         }
@@ -127,40 +120,29 @@
             display: flex; justify-content: center; align-items: center; text-align: center;
             font-family: 'Pacifico', cursive; font-size: 1.6rem; color: #f44545;
             cursor: grab;
-            touch-action: none; /* Critical for drag */
+            touch-action: none;
             transform-origin: center bottom;
             will-change: transform;
         }
         .note:active { cursor: grabbing; }
 
         /* --- UPGRADE 2: MIXED MEDIA STORIES --- */
-        #page-memories { background: #111; }
-        .story-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        
-        .story-container {
-            width: 100%; max-width: 450px; height: 100%; max-height: 85vh; 
-            aspect-ratio: 9/16; background: #000; position: relative; 
-            border-radius: 10px; overflow: hidden;
-        }
-        
-        /* Media Styling */
         #page-memories { background: #000; }
         .story-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
         
         .story-container {
             width: auto;
             height: 100%; 
-            max-height: 90vh; /* Leave room for safe areas */
-            aspect-ratio: 9 / 16; /* Strict 9:16 Ratio */
+            max-height: 90vh;
+            aspect-ratio: 9 / 16;
             background: #000; position: relative; 
             border-radius: 10px; overflow: hidden;
             box-shadow: 0 0 20px rgba(255,255,255,0.1);
         }
         
-        /* Media fits inside without cropping */
         .story-media { 
             width: 100%; height: 100%; 
-            object-fit: contain; /* Ensures full image is seen */
+            object-fit: contain;
             display: block; 
             background: #000;
         }
@@ -172,11 +154,10 @@
         .p-bar { height: 3px; background: rgba(255,255,255,0.3); flex: 1; border-radius: 2px; overflow: hidden; }
         .p-fill { height: 100%; width: 0%; background: white; transition: width 0.1s linear; }
         
-        /* Custom Video Controls */
         .custom-controls {
             position: absolute; bottom: 30px; left: 0; width: 100%;
             display: flex; justify-content: center; gap: 40px;
-            z-index: 50; /* Above tap zones */
+            z-index: 50;
         }
         
         .ctrl-btn {
@@ -215,8 +196,23 @@
             <div class="wick"></div>
             <div class="candle-body"></div>
         </div>
-        <div class="timer" id="timer">10</div>
-        <div style="margin-top:20px; opacity:0.7">Blow out the candle at 0!</div>
+        
+        <div class="timer" id="timer">00 : 00 : 00</div>
+        
+        <div id="instruction" style="margin-top:20px; opacity:0.7">Wait for the magic moment...</div>
+        
+        <button id="enterBtn" class="hidden" onclick="manualStart()" style="
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        ">Click to Celebrate! 🎉</button>
     </div>
 
     <div id="stage-2" class="stage hidden flex-center">
@@ -283,20 +279,70 @@
         const hide = id => get(id).classList.add('hidden');
         const show = id => get(id).classList.remove('hidden');
 
-        // === STAGE 1: CANDLE ===
-        let count = 10;
-        const countdown = setInterval(() => {
-            count--;
-            get('timer').innerText = count < 10 ? "0" + count : count;
-            if (count <= 0) {
-                clearInterval(countdown);
-                get('flame').style.transform = "scale(0)";
-                setTimeout(startStrangerThings, 1000);
+        // === STAGE 1: REAL-TIME COUNTDOWN LOGIC ===
+        
+        // --- CONFIGURATION ---
+        const targetDate = new Date("January 9, 2026 00:00:00").getTime();
+        
+        const timerEl = get('timer');
+        const instructionEl = get('instruction');
+        const enterBtn = get('enterBtn');
+        const flameEl = get('flame');
+
+        const countdownInterval = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            // Calculation
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Formatting
+            const h = hours < 10 ? "0" + hours : hours;
+            const m = minutes < 10 ? "0" + minutes : minutes;
+            const s = seconds < 10 ? "0" + seconds : seconds;
+
+            // Display
+            timerEl.innerText = `${h} : ${m} : ${s}`;
+
+            // Target Reached
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                if (enterBtn.classList.contains('hidden')) {
+                    timerEl.innerText = "00 : 00 : 00";
+                    instructionEl.innerText = "Happy Birthday!";
+                    triggerTransition();
+                }
             }
         }, 1000);
+
+        // Check if user is late
+        (function checkLateArrival() {
+            const now = new Date().getTime();
+            if (now > targetDate) {
+                clearInterval(countdownInterval);
+                timerEl.classList.add('hidden');
+                instructionEl.innerText = "The moment has arrived!";
+                enterBtn.classList.remove('hidden');
+            }
+        })();
+
+        function manualStart() {
+            triggerTransition();
+        }
+
+        function triggerTransition() {
+            flameEl.style.transition = "transform 0.5s, opacity 0.5s";
+            flameEl.style.transform = "scale(0)";
+            flameEl.style.opacity = "0";
+            setTimeout(startStrangerThings, 1000);
+        }
+
         function loadSpotify() {
             window.location.href = "index1.html";
         }
+
         // === STAGE 2: STRANGER THINGS ===
         function startStrangerThings() {
             hide('stage-1');
@@ -379,10 +425,7 @@
                 const card = document.createElement('div');
                 card.className = 'note';
                 card.innerHTML = msg;
-                // Add aesthetic rotation
                 card.style.transform = `rotate(${Math.random()*6 - 3}deg)`;
-                
-                // Attach Drag Logic
                 makeDraggable(card);
                 container.appendChild(card);
             });
@@ -394,14 +437,14 @@
             const start = (e) => {
                 isDragging = true;
                 startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                card.style.transition = 'none'; // Remove transition for instant drag
+                card.style.transition = 'none'; 
             };
 
             const move = (e) => {
                 if (!isDragging) return;
                 currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
                 const deltaX = currentX - startX;
-                const rotation = deltaX * 0.1; // Rotate while dragging
+                const rotation = deltaX * 0.1; 
                 card.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
             };
 
@@ -410,27 +453,22 @@
                 isDragging = false;
                 const endX = e.type.includes('mouse') ? e.clientX : e.changedTouches[0].clientX;
                 const deltaX = endX - startX;
-                const threshold = window.innerWidth * 0.25; // 25% of screen width
+                const threshold = window.innerWidth * 0.25; 
 
                 if (Math.abs(deltaX) > threshold) {
-                    // Fly away
                     const direction = deltaX > 0 ? 1 : -1;
                     card.style.transition = 'transform 0.5s ease-out';
                     card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
-                    setTimeout(() => card.remove(), 500); // Remove from DOM
+                    setTimeout(() => card.remove(), 500); 
                 } else {
-                    // Snap back
                     card.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                     card.style.transform = `rotate(${Math.random()*6 - 3}deg)`;
                 }
             };
 
-            // Mouse Events
             card.addEventListener('mousedown', start);
             window.addEventListener('mousemove', move);
             window.addEventListener('mouseup', end);
-
-            // Touch Events
             card.addEventListener('touchstart', start);
             window.addEventListener('touchmove', move);
             window.addEventListener('touchend', end);
@@ -438,11 +476,10 @@
 
         // === UPGRADE 2: MIXED MEDIA STORIES ===
         const storyData = [
-            // Generic Unsplash Placeholders
-            { type: 'video', src: 'v1.mp4' }, // Confetti
-            { type: 'video', src: 'v3.mp4' }, // Sample Birthday Video
-            { type: 'video', src: 'v2.mp4' }, // Cake
-            { type: 'video', src: 'v4.mp4' } // Fun Video
+            { type: 'video', src: 'v1.mp4' }, 
+            { type: 'video', src: 'v3.mp4' }, 
+            { type: 'video', src: 'v2.mp4' }, 
+            { type: 'video', src: 'v4.mp4' } 
         ];
         
         let curStory = 0;
@@ -467,7 +504,7 @@
             const container = get('media-container');
             const controls = get('video-controls');
             container.innerHTML = '';
-            controls.classList.add('hidden'); // Hide controls by default
+            controls.classList.add('hidden'); 
             
             const data = storyData[curStory];
             let mediaEl;
@@ -477,11 +514,10 @@
                 mediaEl.src = data.src;
                 mediaEl.className = 'story-media';
                 mediaEl.autoplay = true;
-                mediaEl.muted = false; // Try unmuted
+                mediaEl.muted = false; 
                 mediaEl.loop = true;
                 mediaEl.playsInline = true;
                 
-                // Show custom controls
                 controls.classList.remove('hidden');
                 setupVideoControls(mediaEl);
             } else {
@@ -498,11 +534,9 @@
             const playBtn = get('btn-play');
             const muteBtn = get('btn-mute');
             
-            // Reset Icons
             playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
             muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
 
-            // Play/Pause
             playBtn.onclick = (e) => {
                 e.stopPropagation();
                 if (video.paused) {
@@ -514,7 +548,6 @@
                 }
             };
 
-            // Mute/Unmute
             muteBtn.onclick = (e) => {
                 e.stopPropagation();
                 video.muted = !video.muted;
