@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Birthday Player • Web & Mobile</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --primary: #1DB954;
+            --white: #FFFFFF;
+            --text-gray: #B3B3B3;
+            --font-stack: 'DM Sans', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            font-family: var(--font-stack);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Center horizontally and vertically */
+        }
+
+        /* --- START OVERLAY (MANDATORY FOR AUDIO) --- */
+        .start-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s;
+        }
+        .start-overlay.hidden { opacity: 0; pointer-events: none; }
+        .start-btn {
+            background: var(--primary); color: white; padding: 15px 40px; border-radius: 30px;
+            font-size: 1.2rem; font-weight: bold; border: none; margin-top: 20px; cursor: pointer;
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.5); animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* --- MAIN PLAYER CONTAINER (MOBILE DEFAULT) --- */
+        .player-container {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #404040 0%, #121212 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 50px; flex-shrink: 0; margin-bottom: 10px;
+        }
+        .playlist-info { text-align: center; }
+        .playlist-label { font-size: 10px; letter-spacing: 1px; color: var(--text-gray); text-transform: uppercase; }
+        .playlist-title { font-size: 14px; font-weight: 700; }
+        .menu-btn { background: none; border: none; color: var(--white); font-size: 1.2rem; cursor: pointer; padding: 10px; }
+
+        /* --- ALBUM ART --- */
+        .art-wrapper {
+            flex-grow: 1;
+            display: flex; justify-content: center; align-items: center;
+            margin: 10px 0;
+            min-height: 0; /* Important for flex scaling */
+        }
+        .album-art {
+            width: 100%; height: auto; aspect-ratio: 1/1;
+            object-fit: cover; border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            max-height: 350px; /* Cap on mobile */
+        }
+
+        /* --- CONTROLS AREA --- */
+        .player-controls-area { flex-shrink: 0; padding-bottom: 10px; }
+        .track-details { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; }
+        .track-text h2 { font-size: 1.5rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
+        .track-text p { color: var(--text-gray); font-size: 1rem; }
+        .like-icon { color: var(--primary); font-size: 1.5rem; }
+
+        .progress-container { margin-bottom: 15px; }
+        .progress-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; cursor: pointer; }
+        .progress-fill { height: 100%; background: var(--white); width: 0%; border-radius: 2px; transition: width 0.1s linear; }
+        .time-stamps { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-gray); margin-top: 6px; }
+
+        .control-buttons { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ctrl-btn { background: none; border: none; color: var(--white); font-size: 1.4rem; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
+        .ctrl-btn:hover { opacity: 1; }
+        .play-btn { 
+            width: 60px; height: 60px; background: var(--white); color: #000; 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6rem; 
+            transition: transform 0.2s;
+        }
+        .play-btn:active { transform: scale(0.95); }
+
+        /* --- LYRICS/MESSAGE PREVIEW --- */
+        .lyrics-preview-area {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 16px;
+            height: 100px; /* Fixed height on mobile */
+            overflow: hidden; cursor: pointer; flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .lyrics-preview-area:hover { background-color: rgba(255,255,255,0.2); }
+        .lyrics-title { font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; opacity: 0.8; }
+        .lyrics-text { font-size: 16px; font-weight: 700; line-height: 1.4; color: rgba(255,255,255,0.95); }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(5px);
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background: #282828; width: 90%; max-width: 500px; border-radius: 16px; padding: 30px;
+            position: relative; text-align: center; transform: translateY(20px); transition: transform 0.3s;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+        .close-modal-btn { background: var(--white); color: #000; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; margin-top: 20px;}
+
+        /* ========================================= */
+        /* === LAPTOP / DESKTOP VIEW (The Magic) === */
+        /* ========================================= */
+        @media screen and (min-width: 900px) {
+            body {
+                background: #000; /* Darker background outside the card */
+            }
+
+            .player-container {
+                /* Transform into a Landscape Card */
+                max-width: 1000px;
+                height: 600px;
+                border-radius: 20px;
+                display: grid;
+                grid-template-columns: 45% 55%; /* Split 45% Art, 55% Controls */
+                grid-template-rows: auto 1fr auto; /* Header, Main Content, Bottom */
+                gap: 0 40px;
+                padding: 40px;
+                box-shadow: 0 0 50px rgba(29, 185, 84, 0.1);
+            }
+
+            /* Header spans full width */
+            .header {
+                grid-column: 1 / -1;
+                margin-bottom: 20px;
+            }
+
+            /* Art takes the entire left column */
+            .art-wrapper {
+                grid-column: 1;
+                grid-row: 2 / span 2;
+                max-height: 100%;
+                margin: 0;
+            }
+            .album-art {
+                max-height: 100%;
+                max-width: 100%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            }
+
+            /* Controls move to the top-right quadrant */
+            .player-controls-area {
+                grid-column: 2;
+                grid-row: 2;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end; /* Push controls down slightly towards the lyrics */
+                padding-bottom: 20px;
+                padding-right: 50px;
+            }
+
+            /* Lyrics move to the bottom-right quadrant */
+            .lyrics-preview-area {
+                grid-column: 2;
+                grid-row: 3;
+                height: 140px; /* Taller on desktop */
+                width: 450px;
+                border-radius: 16px;
+                padding-right: 50px;
+            }
+
+            /* Adjust text sizes for desktop */
+            .track-text h2 { font-size: 2.5rem; max-width: 100%; }
+            .track-text p { font-size: 1.2rem; }
+            .play-btn { width: 70px; height: 70px; font-size: 2rem; }
+            .ctrl-btn { font-size: 1.8rem; margin: 0 15px; }
+            .control-buttons { justify-content: flex-start; gap: 20px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="start-overlay" id="startOverlay">
+        <h1 style="color:white; margin-bottom: 10px; font-size: 2rem;">Birthday Vibes</h1>
+        <p style="color:#b3b3b3;">Tap to Open</p>
+        <button class="start-btn">PLAY ▶</button>
+    </div>
+
+    <div class="player-container" id="bgGradient">
+        
+        <div class="header">
+            <i class="fa-solid fa-chevron-down" style="opacity: 0.5;"></i>
+            <div class="playlist-info">
+                <span class="playlist-label">PLAYING FROM PLAYLIST</span>
+                <div class="playlist-title">Birthday Vibes 2026</div>
+            </div>
+            <button class="menu-btn" onclick="openModal()"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </div>
+
+        <div class="art-wrapper">
+            <img src="" alt="Album Art" class="album-art" id="albumArt">
+        </div>
+
+        <div class="player-controls-area">
+            <div class="track-details">
+                <div class="track-text">
+                    <h2 id="trackTitle">Loading...</h2>
+                    <p id="artistName">...</p>
+                </div>
+                <i class="fa-solid fa-circle-check like-icon"></i>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar-bg">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-stamps">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">--:--</span>
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button class="ctrl-btn"  style="color: var(--primary);"><i class="fa-solid fa-shuffle"></i></button>
+                <button class="ctrl-btn" onclick="prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="play-btn" id="playBtn" onclick="togglePlay()"><i class="fa-solid fa-play" id="playIcon"></i></button>
+                <button class="ctrl-btn" onclick="nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
+                <button class="ctrl-btn"><i class="fa-solid fa-repeat"></i></button>
+            </div>
+        </div>
+
+        <div class="lyrics-preview-area" id="lyricsBox" onclick="openModal()">
+            <div class="lyrics-title">Message Preview</div>
+            <div class="lyrics-text" id="lyricsPreview">...</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="messageModal">
+        <div class="modal-card">
+            <div style="font-size: 0.9rem; color: #B3B3B3; margin-bottom: 10px;" id="modalSender">From: ...</div>
+            <div style="font-size: 1.2rem; line-height: 1.6; color: var(--white); margin-bottom: 20px; max-height: 60vh; overflow-y: auto;" id="modalMessage">
+                ...
+            </div>
+            <button class="close-modal-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" preload="auto"></audio>
+
+    <script>
+        // --- YOUR TRACKS HERE ---
+        const tracks = [
+            {
+                title: "Tere Jaisa Koi Bhi Nahi",
+                artist: "The Intro",
+                img: "spics/1.jpeg",
+                audio: "1.mp3", 
+                color: "#b05f6d", 
+                sender: "Your Love",
+                message: "Chaand pei gaya, Shaam tak gaya, Suraj Dhal gaya, Per tere jaisa koi mila hi nhi."
+            },
+            {
+                title: "Meri Pyaari Peeli",
+                artist: "I'm Fallen in Love Again",
+                img: "spics/2.jpeg",
+                audio: "2.mp3", 
+                color: "#b05f6d", 
+                sender: "Your Care Taker",
+                message: "Hi my Yellow Paper Daizy, You know what - You make me crazy!"
+            },
+            {
+                title: "Appke aane se Reh Jane se",
+                artist: "Meri Muskaan",
+                img: "spics/3.jpeg",
+                audio: "3.mp3",
+                color: "#1db954",
+                sender: "Your Addict",
+                message: "Sach batau toh tumhari aadat ho gai, Cigrate wali nhi jo jaan le, kuch aisi jo jine de."
+            },
+            {
+                title: "Tum Ya Tumhare Jaisi",
+                artist: "Sawaal?",
+                img: "spics/4.jpeg",
+                audio: "4.mp3", 
+                color: "#b05f6d", 
+                sender: "Your Solution (Maybe)",
+                message: "Dekho, Sach batau toh meri koi aish waish hai nhi, mai hu tumhara premi, tumhari aadatao ka premi, tumhare sawalo ka tumhare shaq ka premi, mujhse ladkio mei nhi, tum mei dilchasbi hai"
+            },
+            {
+                title: "3 Waterfall",
+                artist: "Our Happiness",
+                img: "spics/5.jpeg",
+                audio: "5.mp3", 
+                color: "#b05f6d", 
+                sender: "Your 'Together'",
+                message: "Little bit Like Mike Theory, insab musibato ko khatam karne ke badh, hum sukun bhari jindagi jiyenge, jaha 3 jharne ho na ho, tumhare aankhei ho, pahaad ho na ho tum ho."
+            },
+            {
+                title: "Teri Yaad",
+                artist: "Missing You",
+                img: "spics/6.jpeg",
+                audio: "6.mp3", 
+                color: "#b05f6d", 
+                sender: "Your Cute Boy",
+                message: "I miss You, ab sahi mei roo dunga"
+            }
+        ];
+
+        // --- STATE & ELEMENTS ---
+        let currentIndex = 0;
+        let isPlaying = false;
+        let fallbackInterval = null;
+        let fallbackSeconds = 0;
+        const FALLBACK_DURATION = 10; 
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playIcon = document.getElementById('playIcon');
+        const startOverlay = document.getElementById('startOverlay');
+        const bgGradient = document.getElementById('bgGradient');
+
+        // --- START & AUDIO UNLOCK ---
+        startOverlay.addEventListener('click', () => {
+            startOverlay.classList.add('hidden');
+            // Silent play to unlock audio context
+            audioPlayer.play().then(() => {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+            }).catch(e => console.log("Audio unlock:", e));
+            loadTrack(currentIndex);
+        });
+
+        // --- LOAD TRACK ---
+        function loadTrack(index) {
+            const track = tracks[index];
+            
+            // Text & Images
+            document.getElementById('trackTitle').innerText = track.title;
+            document.getElementById('artistName').innerText = track.artist;
+            document.getElementById('albumArt').src = track.img;
+            document.getElementById('lyricsPreview').innerText = track.message.substring(0, 60) + "...";
+            document.getElementById('modalSender').innerText = "From: " + track.sender;
+            document.getElementById('modalMessage').innerText = track.message;
+
+            // Colors
+            bgGradient.style.background = `linear-gradient(180deg, ${track.color} 0%, #121212 100%)`;
+            document.getElementById('lyricsBox').style.backgroundColor = track.color; // Match preview box
+
+            // Reset
+            clearInterval(fallbackInterval);
+            fallbackSeconds = 0;
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('currentTime').innerText = "0:00";
+
+            // Audio Handling
+            if (track.audio) {
+                audioPlayer.src = track.audio;
+                document.getElementById('totalTime').innerText = "Loading...";
+                // Short timeout to allow source to attach
+                setTimeout(() => {
+                    if(!startOverlay.classList.contains('hidden')) return; // Don't auto-play if overlay is up
+                    playTrack();
+                }, 500);
+            } else {
+                audioPlayer.src = "";
+                document.getElementById('totalTime').innerText = "0:" + FALLBACK_DURATION;
+                if(!startOverlay.classList.contains('hidden')) return;
+                startFallbackTimer();
+            }
+        }
+
+        // --- PLAYBACK CONTROLS ---
+        function playTrack() {
+            isPlaying = true;
+            playIcon.className = "fa-solid fa-pause";
+            audioPlayer.play().catch(e => console.error(e));
+        }
+
+        function pauseTrack() {
+            isPlaying = false;
+            playIcon.className = "fa-solid fa-play";
+            audioPlayer.pause();
+        }
+
+        function togglePlay() {
+            if (tracks[currentIndex].audio) {
+                if (audioPlayer.paused) playTrack();
+                else pauseTrack();
+            } else {
+                if (isPlaying) {
+                    isPlaying = false;
+                    playIcon.className = "fa-solid fa-play";
+                    clearInterval(fallbackInterval);
+                } else {
+                    startFallbackTimer();
+                }
+            }
+        }
+
+        function nextTrack() {
+            currentIndex = (currentIndex + 1) % tracks.length;
+            loadTrack(currentIndex);
+        }
+
+        function prevTrack() {
+            currentIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+            loadTrack(currentIndex);
+        }
+
+        // --- PROGRESS ---
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                document.getElementById('progressFill').style.width = percent + "%";
+                document.getElementById('currentTime').innerText = formatTime(audioPlayer.currentTime);
+                document.getElementById('totalTime').innerText = formatTime(audioPlayer.duration);
+            }
+        });
+
+        audioPlayer.addEventListener('ended', nextTrack);
+
+        function startFallbackTimer() {
+            isPlaying = true;
+            playIcon.className = "fa-solid fa-pause";
+            clearInterval(fallbackInterval);
+            fallbackInterval = setInterval(() => {
+                fallbackSeconds++;
+                const percent = (fallbackSeconds / FALLBACK_DURATION) * 100;
+                document.getElementById('progressFill').style.width = percent + "%";
+                document.getElementById('currentTime').innerText = formatTime(fallbackSeconds);
+                if (fallbackSeconds >= FALLBACK_DURATION) {
+                    clearInterval(fallbackInterval);
+                    nextTrack();
+                }
+            }, 1000);
+        }
+
+        // --- UTILS ---
+        function formatTime(s) {
+            if (isNaN(s)) return "0:00";
+            const min = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return min + ":" + (sec < 10 ? "0" + sec : sec);
+        }
+
+        function openModal() { document.getElementById('messageModal').classList.add('active'); }
+        function closeModal() { document.getElementById('messageModal').classList.remove('active'); }
+
+    </script>
+</body>
+</html>

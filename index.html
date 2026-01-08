@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Muskan</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Quicksand:wght@500;700&family=Pacifico&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- RESET & VARIABLES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap');
+        :root {
+            --bg-dark: #000;
+            --bg-cute: #FFF5F5;
+            --bg-mint: #E0F7FA;
+            --stranger-red: #ff0000;
+            --bg-st: #ff0303;
+            --cute-shadow: 0 10px 20px rgba(255, 0, 0, 0.751);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Quicksand', sans-serif; background: #000; }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+        .stage { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transition: opacity 0.8s ease; }
+        .flex-center { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+
+        /* ========================
+           STAGE 1: THE CANDLE
+           ======================== */
+        #stage-1 { background: radial-gradient(circle at center, #2b2b2b, #000); color: white; z-index: 40; }
+        
+        .candle-container { position: relative; margin-bottom: 20px; }
+        .candle-body {
+            width: 60px; height: 150px;
+            background: linear-gradient(to right, #eecaca, #fff, #eecaca);
+            border-radius: 4px; position: relative;
+        }
+        .wick {
+            width: 4px; height: 15px; background: #333;
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+        }
+        .flame {
+            width: 20px; height: 40px;
+            background: radial-gradient(ellipse at bottom, #ffeb3b, #ff9800, transparent);
+            border-radius: 50% 50% 20% 20%;
+            position: absolute; top: -50px; left: 50%;
+            transform: translateX(-50%); transform-origin: bottom center;
+            box-shadow: 0 0 20px #ffeb3b, 0 0 50px #ff9800;
+            animation: flicker 0.1s infinite alternate;
+            transition: transform 0.3s;
+        }
+        @keyframes flicker {
+            0% { transform: translateX(-50%) scale(1) rotate(-2deg); opacity: 1; }
+            100% { transform: translateX(-50%) scale(0.9) rotate(2deg); opacity: 0.9; }
+        }
+        .timer { font-size: 4rem; font-family: 'Libre Baskerville', serif; margin-top: 30px; }
+
+        /* ========================
+           STAGE 2: STRANGER THINGS
+           ======================== */
+        #stage-2 { background: #000; z-index: 30; }
+        canvas { position: absolute; top: 0; left: 0; height: 100%; width: 100%; }
+        
+        .stranger-text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            font-family: 'Libre Baskerville', serif; font-size: 3.5rem; letter-spacing: -2px;
+            color: transparent; -webkit-text-stroke: 2px var(--stranger-red);
+            text-shadow: 0 0 15px var(--stranger-red); opacity: 0; transition: all 2s ease-out;
+            white-space: nowrap;
+        }
+        .stranger-text.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* ========================
+           STAGE 3: MENU
+           ======================== */
+        #stage-3 { 
+            background-color: #000;
+            
+            /* UPDATED: Demogorgon Background */
+            /* Note: Replace the URL below with your preferred Demogorgon image if needed */
+            background-image: url('dg1.png'); 
+            
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain; /* Ensures the monster is fully visible */
+            
+            /* Dark overlay to ensure the cute cards pop */
+            box-shadow: inset 0 0 100px #000; 
+
+            z-index: 20; 
+            padding: 20px; 
+        }
+        .menu-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 900px; }
+        .menu-card {
+            width: 250px; height: 300px; background: transparent; border-radius: 25px; border: 2px solid rgb(254, 0, 0);
+            box-shadow: var(--cute-shadow); cursor: pointer; transition: transform 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .menu-card:active { transform: scale(0.95); }
+        .menu-icon { font-size: 4rem; margin-bottom: 20px; }
+        .menu-title { font-size: 1.5rem; color: whitesmoke; font-weight: bold; font-family: "Teko", sans-serif; }
+
+        /* ========================
+           STAGE 4: PAGES
+           ======================== */
+        #stage-4 { background: var(--bg-dark); z-index: 10; }
+        .page-content { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        
+        .back-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: transparent; padding: 5px 20px; border-radius: 3px;;
+            text-shadow: var(--cute-shadow); cursor: pointer; font-weight: bold; color: #ffffff;font-family: "Teko", sans-serif;
+        }
+
+        /* --- UPGRADE 1: DRAGGABLE HAMPER --- */
+        #page-hamper { overflow: hidden; }
+        .stack-container { position: relative; width: 300px; height: 400px; }
+        
+        .note {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: flex; justify-content: center; align-items: center; text-align: center;
+            font-family: 'Pacifico', cursive; font-size: 1.6rem; color: #f44545;
+            cursor: grab;
+            touch-action: none; /* Critical for drag */
+            transform-origin: center bottom;
+            will-change: transform;
+        }
+        .note:active { cursor: grabbing; }
+
+        /* --- UPGRADE 2: MIXED MEDIA STORIES --- */
+        #page-memories { background: #111; }
+        .story-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        
+        .story-container {
+            width: 100%; max-width: 450px; height: 100%; max-height: 85vh; 
+            aspect-ratio: 9/16; background: #000; position: relative; 
+            border-radius: 10px; overflow: hidden;
+        }
+        
+        /* Media Styling */
+        #page-memories { background: #000; }
+        .story-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        
+        .story-container {
+            width: auto;
+            height: 100%; 
+            max-height: 90vh; /* Leave room for safe areas */
+            aspect-ratio: 9 / 16; /* Strict 9:16 Ratio */
+            background: #000; position: relative; 
+            border-radius: 10px; overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+        
+        /* Media fits inside without cropping */
+        .story-media { 
+            width: 100%; height: 100%; 
+            object-fit: contain; /* Ensures full image is seen */
+            display: block; 
+            background: #000;
+        }
+
+        .progress-bar-container {
+            position: absolute; top: 15px; left: 0; width: 100%; padding: 0 10px; 
+            display: flex; gap: 5px; z-index: 20;
+        }
+        .p-bar { height: 3px; background: rgba(255,255,255,0.3); flex: 1; border-radius: 2px; overflow: hidden; }
+        .p-fill { height: 100%; width: 0%; background: white; transition: width 0.1s linear; }
+        
+        /* Custom Video Controls */
+        .custom-controls {
+            position: absolute; bottom: 30px; left: 0; width: 100%;
+            display: flex; justify-content: center; gap: 40px;
+            z-index: 50; /* Above tap zones */
+        }
+        
+        .ctrl-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; font-size: 1.2rem;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .ctrl-btn:active { background: rgba(255, 255, 255, 0.4); }
+
+        .tap-zone { position: absolute; top: 0; height: 100%; width: 35%; z-index: 10; }
+        .left-zone { left: 0; } .right-zone { right: 0; }
+
+        /* MUSIC PAGE */
+        .music-note { font-size: 6rem; animation: bounce 1.5s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* Responsive Fixes */
+        @media(max-width: 768px) {
+            .menu-card { width: 90%; height: 100px; flex-direction: row; gap: 20px; }
+            .menu-icon { font-size: 2.5rem; margin-bottom: 0; }
+            .stranger-text { font-size: 2rem; white-space: normal; }
+            .stack-container { width: 85vw; height: 60vh; }
+            #stage-3 {background-image: url('dg2.png');}
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stage-1" class="stage flex-center">
+        <div class="candle-container">
+            <div class="flame" id="flame"></div>
+            <div class="wick"></div>
+            <div class="candle-body"></div>
+        </div>
+        <div class="timer" id="timer">10</div>
+        <div style="margin-top:20px; opacity:0.7">Blow out the candle at 0!</div>
+    </div>
+
+    <div id="stage-2" class="stage hidden flex-center">
+        <canvas id="fireworksCanvas"></canvas>
+        <div class="stranger-text" id="strangerText">HAPPY BIRTHDAY<br>MUSKAN</div>
+    </div>
+
+    <div id="stage-3" class="stage hidden flex-center">
+        <a href="https://fontmeme.com/stranger-things-font/"><img src="https://fontmeme.com/permalink/260108/6b7026ba.png" alt="stranger-things-font" border="0"></a>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="openPage('hamper')">
+                <div class="menu-icon">💌</div>
+                <div class="menu-title">-Hamper-</div>
+            </div>
+            <div class="menu-card" onclick="openPage('memories')">
+                <div class="menu-icon">📸</div>
+                <div class="menu-title">-Memories-</div>
+            </div>
+            <div class="menu-card" onclick="openPage('music')">
+                <div class="menu-icon">🎵</div>
+                <div class="menu-title">-Music-</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stage-4" class="stage hidden">
+        
+        <div id="page-hamper" class="page-content hidden flex-center">
+            <div class="back-btn" onclick="goBack()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E52905"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg></div>
+            <div class="stack-container" id="cardStack">
+                </div>
+            <p style="margin-top:20px; color:#999; font-size:0.9rem;">(Drag cards to throw them away!)</p>
+        </div>
+
+        <div id="page-memories" class="page-content hidden">
+            <div class="back-btn" onclick="goBack()"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E52905"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg></div>
+            <div class="story-wrapper">
+                <div class="story-container">
+                    <div class="progress-bar-container" id="storyBars"></div>
+                    
+                    <div id="media-container" style="width:100%; height:100%; position: relative;"></div>
+                    
+                    <div id="video-controls" class="custom-controls hidden">
+                        <button class="ctrl-btn" id="btn-play"><i class="fa-solid fa-pause"></i></button>
+                        <button class="ctrl-btn" id="btn-mute"><i class="fa-solid fa-volume-xmark"></i></button>
+                    </div>
+
+                    <div class="tap-zone left-zone" onclick="prevStory()"></div>
+                    <div class="tap-zone right-zone" onclick="nextStory()"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-music" class="page-content hidden flex-center">
+            <div class="back-btn" onclick="goBack()" ><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E52905"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg></div>
+            <div class="music-note">🎧</div>
+            <button onclick="loadSpotify()">Load Spotify</button>
+        </div>
+    </div>
+
+    <script>
+        // === HELPERS ===
+        const get = id => document.getElementById(id);
+        const hide = id => get(id).classList.add('hidden');
+        const show = id => get(id).classList.remove('hidden');
+
+        // === STAGE 1: CANDLE ===
+        let count = 10;
+        const countdown = setInterval(() => {
+            count--;
+            get('timer').innerText = count < 10 ? "0" + count : count;
+            if (count <= 0) {
+                clearInterval(countdown);
+                get('flame').style.transform = "scale(0)";
+                setTimeout(startStrangerThings, 1000);
+            }
+        }, 1000);
+        function loadSpotify() {
+            window.location.href = "index1.html";
+        }
+        // === STAGE 2: STRANGER THINGS ===
+        function startStrangerThings() {
+            hide('stage-1');
+            show('stage-2');
+            setTimeout(() => get('strangerText').classList.add('visible'), 500);
+            initFireworks();
+            setTimeout(() => {
+                stopFireworks();
+                hide('stage-2');
+                show('stage-3');
+            }, 8000);
+        }
+
+        // --- HEART FIREWORKS ---
+        let canvas, ctx, w, h, particles = [], animId;
+        function initFireworks() {
+            canvas = get('fireworksCanvas');
+            ctx = canvas.getContext('2d');
+            resize();
+            window.addEventListener('resize', resize);
+            loop();
+        }
+        function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+        
+        function loop() {
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(0, 0, w, h);
+            if (Math.random() < 0.05) createHeart(Math.random() * w, h * 0.5);
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.015;
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            });
+            ctx.globalAlpha = 1;
+            animId = requestAnimationFrame(loop);
+        }
+        function createHeart(x, y) {
+            for (let i = 0; i < 40; i++) {
+                const t = (Math.PI * 2 * i) / 40;
+                const speed = 1.5;
+                particles.push({
+                    x: x, y: y,
+                    vx: (16 * Math.pow(Math.sin(t), 3)) * 0.1 * speed,
+                    vy: -(13 * Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t)) * 0.1 * speed,
+                    color: `hsl(${Math.random()*360}, 70%, 50%)`, alpha: 1
+                });
+            }
+        }
+        function stopFireworks() { cancelAnimationFrame(animId); }
+
+        // === STAGE 3 & 4: NAVIGATION ===
+        function openPage(page) {
+            hide('stage-3'); show('stage-4');
+            document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+            show('page-' + page);
+            if (page === 'hamper') initHamper();
+            if (page === 'memories') initStories();
+        }
+        function goBack() { show('stage-3'); hide('stage-4'); }
+
+        // === UPGRADE 1: DRAGGABLE HAMPER ===
+        const messages = [
+            "Happy Birthday Baby! 😘🎂",
+            "I can't tell you, How much i miss you 🫂✨",
+            "Always keep smiling, I'm so glad that you born, My Life Partner 😊",
+            "Sorry babe, I am not with you at this precious moment, But trust me You are always in my heart ❤️🎀",
+            "I belive in you Babe, One day you make your Mom,Dad and me Proud 🍾🦄",
+            "You are the most special person in my life, I love you so much 💖🌹",
+            "May all your dreams come true, You deserve the best things in this world 🌟💫",
+        ];
+
+        function initHamper() {
+            const container = get('cardStack');
+            container.innerHTML = '';
+            
+            // Create cards (reversed so first index is visibly on top)
+            [...messages].reverse().forEach((msg, i) => {
+                const card = document.createElement('div');
+                card.className = 'note';
+                card.innerHTML = msg;
+                // Add aesthetic rotation
+                card.style.transform = `rotate(${Math.random()*6 - 3}deg)`;
+                
+                // Attach Drag Logic
+                makeDraggable(card);
+                container.appendChild(card);
+            });
+        }
+
+        function makeDraggable(card) {
+            let startX = 0, currentX = 0, isDragging = false;
+
+            const start = (e) => {
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                card.style.transition = 'none'; // Remove transition for instant drag
+            };
+
+            const move = (e) => {
+                if (!isDragging) return;
+                currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const deltaX = currentX - startX;
+                const rotation = deltaX * 0.1; // Rotate while dragging
+                card.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
+            };
+
+            const end = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                const endX = e.type.includes('mouse') ? e.clientX : e.changedTouches[0].clientX;
+                const deltaX = endX - startX;
+                const threshold = window.innerWidth * 0.25; // 25% of screen width
+
+                if (Math.abs(deltaX) > threshold) {
+                    // Fly away
+                    const direction = deltaX > 0 ? 1 : -1;
+                    card.style.transition = 'transform 0.5s ease-out';
+                    card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 45}deg)`;
+                    setTimeout(() => card.remove(), 500); // Remove from DOM
+                } else {
+                    // Snap back
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    card.style.transform = `rotate(${Math.random()*6 - 3}deg)`;
+                }
+            };
+
+            // Mouse Events
+            card.addEventListener('mousedown', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+
+            // Touch Events
+            card.addEventListener('touchstart', start);
+            window.addEventListener('touchmove', move);
+            window.addEventListener('touchend', end);
+        }
+
+        // === UPGRADE 2: MIXED MEDIA STORIES ===
+        const storyData = [
+            // Generic Unsplash Placeholders
+            { type: 'video', src: 'v1.mp4' }, // Confetti
+            { type: 'video', src: 'v3.mp4' }, // Sample Birthday Video
+            { type: 'video', src: 'v2.mp4' }, // Cake
+            { type: 'video', src: 'v4.mp4' } // Fun Video
+        ];
+        
+        let curStory = 0;
+
+        function initStories() {
+            curStory = 0;
+            const bars = get('storyBars');
+            bars.innerHTML = '';
+            storyData.forEach((_, i) => {
+                const bar = document.createElement('div');
+                bar.className = 'p-bar';
+                const fill = document.createElement('div');
+                fill.className = 'p-fill';
+                fill.id = `fill-${i}`;
+                bar.appendChild(fill);
+                bars.appendChild(bar);
+            });
+            renderStory();
+        }
+
+        function renderStory() {
+            const container = get('media-container');
+            const controls = get('video-controls');
+            container.innerHTML = '';
+            controls.classList.add('hidden'); // Hide controls by default
+            
+            const data = storyData[curStory];
+            let mediaEl;
+
+            if (data.type === 'video') {
+                mediaEl = document.createElement('video');
+                mediaEl.src = data.src;
+                mediaEl.className = 'story-media';
+                mediaEl.autoplay = true;
+                mediaEl.muted = false; // Try unmuted
+                mediaEl.loop = true;
+                mediaEl.playsInline = true;
+                
+                // Show custom controls
+                controls.classList.remove('hidden');
+                setupVideoControls(mediaEl);
+            } else {
+                mediaEl = document.createElement('img');
+                mediaEl.src = data.src;
+                mediaEl.className = 'story-media';
+            }
+
+            container.appendChild(mediaEl);
+            updateBars();
+        }
+
+        function setupVideoControls(video) {
+            const playBtn = get('btn-play');
+            const muteBtn = get('btn-mute');
+            
+            // Reset Icons
+            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+
+            // Play/Pause
+            playBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (video.paused) {
+                    video.play();
+                    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                } else {
+                    video.pause();
+                    playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                }
+            };
+
+            // Mute/Unmute
+            muteBtn.onclick = (e) => {
+                e.stopPropagation();
+                video.muted = !video.muted;
+                muteBtn.innerHTML = video.muted ? 
+                    '<i class="fa-solid fa-volume-xmark"></i>' : 
+                    '<i class="fa-solid fa-volume-high"></i>';
+            };
+        }
+
+        function updateBars() {
+            storyData.forEach((_, i) => {
+                const fill = get(`fill-${i}`);
+                if (i < curStory) fill.style.width = '100%';
+                else if (i === curStory) fill.style.width = '100%';
+                else fill.style.width = '0%';
+            });
+        }
+
+        function nextStory() {
+            if (curStory < storyData.length - 1) {
+                curStory++;
+                renderStory();
+            } else {
+                goBack();
+            }
+        }
+
+        function prevStory() {
+            if (curStory > 0) {
+                curStory--;
+                renderStory();
+            }
+        }
+
+    </script>
+</body>
+</html>
